@@ -4,9 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phan Phan Hải Long - Redteam & Code</title>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="script.js" as="script">
+    <link rel="preload" href="images/avatar.webp" as="image" type="image/webp">
+    
+    <!-- Load critical CSS -->
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Defer non-critical CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/fontawesome.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/solid.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/brands.min.css" media="print" onload="this.media='all'">
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Load fonts with display swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 </head>
 <body>
     <div class="container">
@@ -25,18 +43,39 @@
 
         <section id="home" class="hero">
             <div class="hero-content">
-                <img src="avatar.jpg" alt="Phan Phan Hai Long" class="avatar">
+                <picture>
+                    <source srcset="images/avatar.webp" type="image/webp">
+                    <source srcset="avatar.jpg" type="image/jpeg">
+                    <img src="images/avatar.webp" 
+                         alt="Phan Phan Hai Long" 
+                         class="avatar" 
+                         width="200" 
+                         height="200" 
+                         loading="eager" 
+                         decoding="async"
+                         fetchpriority="high">
+                </picture>
                 <h1>Phan Phan Hải Long</h1>
                 <p>Intern Cyber Security | Redteam & Code</p>
                 <p class="subtitle">From Ha Tinh, Vietnam</p>
                 <div class="main-tech-icons">
-                    <i class="fab fa-node-js" title="Node.js"></i>
-                    <i class="fab fa-react" title="React"></i>
-                    <i class="fab fa-python" title="Python"></i>
-                    <i class="fab fa-java" title="Java"></i>
-                    <i class="fas fa-database" title="PostgreSQL"></i>
-                    <img src="https://img.shields.io/badge/Socket.io-010101?style=flat&logo=socket.io&logoColor=white" alt="Socket.io" style="height:22px;vertical-align:middle;">
-                    <img src="https://img.shields.io/badge/.NET-512BD4?style=flat&logo=dotnet&logoColor=white" alt=".NET" style="height:22px;vertical-align:middle;">
+                    <i class="fab fa-node-js" title="Node.js" aria-hidden="true"></i>
+                    <i class="fab fa-react" title="React" aria-hidden="true"></i>
+                    <i class="fab fa-python" title="Python" aria-hidden="true"></i>
+                    <i class="fab fa-java" title="Java" aria-hidden="true"></i>
+                    <i class="fas fa-database" title="PostgreSQL" aria-hidden="true"></i>
+                    <img src="https://img.shields.io/badge/Socket.io-010101?style=flat&logo=socket.io&logoColor=white" 
+                         alt="Socket.io" 
+                         width="100" 
+                         height="22" 
+                         loading="lazy"
+                         decoding="async">
+                    <img src="https://img.shields.io/badge/.NET-512BD4?style=flat&logo=dotnet&logoColor=white" 
+                         alt=".NET" 
+                         width="100" 
+                         height="22" 
+                         loading="lazy"
+                         decoding="async">
                 </div>
                 <a href="#projects" class="cta-button">View My Work</a>
             </div>
@@ -120,18 +159,27 @@
             <div class="contact-content">
                 <div class="contact-info">
                     <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
                         <p>dodaihoc2402@gmail.com</p>
                     </div>
                     <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
+                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                         <p>Ha Tinh, Vietnam</p>
                     </div>
                 </div>
                 <div class="social-links">
-                    <a href="https://github.com/LoGGGG2402" class="social-link" target="_blank"><i class="fab fa-github"></i></a>
-                    <a href="https://www.linkedin.com/in/h%E1%BA%A3i-long-phan-phan-815323303/" class="social-link" target="_blank"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://www.facebook.com/hailong.phanphan" class="social-link" target="_blank"><i class="fab fa-facebook"></i></a>
+                    <a href="https://github.com/LoGGGG2402" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-github" aria-hidden="true"></i>
+                        <span class="sr-only">GitHub</span>
+                    </a>
+                    <a href="https://www.linkedin.com/in/h%E1%BA%A3i-long-phan-phan-815323303/" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sr-only">LinkedIn</span>
+                    </a>
+                    <a href="https://www.facebook.com/hailong.phanphan" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sr-only">Facebook</span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -140,6 +188,8 @@
             <p>&copy; 2024 Phan Phan Hải Long. All rights reserved.</p>
         </footer>
     </div>
-    <script src="script.js"></script>
+    
+    <!-- Defer non-critical JavaScript -->
+    <script src="script.js" defer></script>
 </body>
 </html> 

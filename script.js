@@ -1,108 +1,147 @@
-// Smooth scrolling for navigation links
+// Debounce function with improved performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Optimized smooth scrolling with better performance
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
         if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
+            const headerOffset = 100;
+            const elementPosition = target.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            // Use requestAnimationFrame for smooth scrolling
+            requestAnimationFrame(() => {
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
             });
         }
     });
 });
 
-// Header scroll effect
+// Optimized header scroll effect with better performance
 const header = document.querySelector('.header');
-let lastScroll = 0;
+let lastScrollY = window.scrollY;
+let ticking = false;
 
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
+function updateHeader() {
+    const currentScrollY = window.scrollY;
     
-    if (currentScroll <= 0) {
-        header.classList.remove('scroll-up');
-        return;
-    }
-    
-    if (currentScroll > lastScroll && !header.classList.contains('scroll-down')) {
-        // Scroll Down
-        header.classList.remove('scroll-up');
+    if (currentScrollY > lastScrollY) {
         header.classList.add('scroll-down');
-    } else if (currentScroll < lastScroll && header.classList.contains('scroll-down')) {
-        // Scroll Up
-        header.classList.remove('scroll-down');
+        header.classList.remove('scroll-up');
+    } else {
         header.classList.add('scroll-up');
+        header.classList.remove('scroll-down');
     }
-    lastScroll = currentScroll;
-});
-
-// Intersection Observer for fade-in animations
-const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.1
-};
-
-const observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in');
-            observer.unobserve(entry.target);
-        }
-    });
-}, observerOptions);
-
-// Observe all sections
-document.querySelectorAll('section').forEach(section => {
-    section.classList.add('fade-out');
-    observer.observe(section);
-});
-
-// Project filtering functionality
-const filterButtons = document.querySelectorAll('.filter-btn');
-const projectCards = document.querySelectorAll('.project-card');
-
-function filterProjects(category) {
-    const cards = document.querySelectorAll('.project-card');
-    cards.forEach(card => {
-        if (category === 'all' || card.getAttribute('data-category') === category) {
-            card.style.display = 'flex';
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'scale(1)';
-            }, 100);
-        } else {
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.8)';
-            setTimeout(() => {
-                card.style.display = 'none';
-            }, 300);
-        }
-    });
+    
+    lastScrollY = currentScrollY;
+    ticking = false;
 }
 
-filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        // Remove active class from all buttons
-        filterButtons.forEach(btn => btn.classList.remove('active'));
-        // Add active class to clicked button
-        button.classList.add('active');
-        // Get filter value and filter projects
-        const filterValue = button.getAttribute('data-filter');
-        filterProjects(filterValue);
+// Use passive event listener for better scroll performance
+window.addEventListener('scroll', () => {
+    if (!ticking) {
+        window.requestAnimationFrame(updateHeader);
+        ticking = true;
+    }
+}, { passive: true });
+
+// Optimized lazy loading with better performance
+const lazyLoadSection = (entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            requestAnimationFrame(() => {
+                entry.target.classList.add('fade-in');
+                observer.unobserve(entry.target);
+            });
+        }
     });
+};
+
+const sectionObserver = new IntersectionObserver(lazyLoadSection, {
+    root: null,
+    rootMargin: '100px',
+    threshold: 0.1
 });
 
-// Add hover effect to project cards
+// Batch DOM reads
+const sections = document.querySelectorAll('section');
+sections.forEach(section => {
+    section.classList.add('fade-out');
+    sectionObserver.observe(section);
+});
+
+// Optimized project filtering with better performance
+const filterProjects = (() => {
+    const cards = document.querySelectorAll('.project-card');
+    const cardStyles = new Map();
+    
+    // Pre-compute initial styles
+    cards.forEach(card => {
+        cardStyles.set(card, {
+            display: card.style.display,
+            opacity: card.style.opacity,
+            transform: card.style.transform
+        });
+    });
+    
+    return function(category) {
+        // Batch DOM updates
+        requestAnimationFrame(() => {
+            const updates = [];
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    updates.push(() => {
+                        card.style.display = 'flex';
+                        requestAnimationFrame(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'scale(1)';
+                        });
+                    });
+                } else {
+                    updates.push(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.8)';
+                        setTimeout(() => {
+                            card.style.display = 'none';
+                        }, 300);
+                    });
+                }
+            });
+            
+            // Execute updates in batches
+            updates.forEach(update => update());
+        });
+    };
+})();
+
+// Optimized hover effects using CSS classes
+const projectCards = document.querySelectorAll('.project-card');
 projectCards.forEach(card => {
     card.addEventListener('mouseenter', () => {
-        card.style.transform = 'translateY(-10px)';
-        card.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.15)';
+        requestAnimationFrame(() => {
+            card.classList.add('card-hover');
+        });
     });
     
     card.addEventListener('mouseleave', () => {
-        card.style.transform = 'translateY(0)';
-        card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        requestAnimationFrame(() => {
+            card.classList.remove('card-hover');
+        });
     });
 });
 
@@ -179,106 +218,197 @@ function getProjectIcon(language, repoName) {
     return icon;
 }
 
+// Optimized GitHub API cache with better performance
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const CACHE_KEY = 'github_repos_cache';
+
+async function fetchGitHubRepos() {
+    try {
+        // Check cache first
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+            const { data, timestamp } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < CACHE_DURATION) {
+                return data;
+            }
+        }
+        
+        // Fetch new data
+        const response = await fetch('https://api.github.com/users/LoGGGG2402/repos?sort=updated&per_page=100');
+        if (!response.ok) throw new Error('Failed to fetch repos');
+        
+        const data = await response.json();
+        
+        // Cache the new data
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data,
+            timestamp: Date.now()
+        }));
+        
+        return data;
+    } catch (error) {
+        console.error('Error fetching GitHub repos:', error);
+        return [];
+    }
+}
+
+// Optimized rendering with better performance
 async function renderGitHubRepos() {
     const grid = document.querySelector('.project-grid');
     if (!grid) return;
     
     try {
-        const response = await fetch('https://api.github.com/users/LoGGGG2402/repos');
-        const repos = await response.json();
+        const repos = await fetchGitHubRepos();
         
         // Sort repos by last updated date
         repos.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
         
-        grid.innerHTML = '';
+        // Create document fragment for better performance
+        const fragment = document.createDocumentFragment();
+        
         repos.forEach(repo => {
-            // Convert language to lowercase for consistent filtering
-            const lang = repo.language ? repo.language.toLowerCase() : 'other';
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            card.setAttribute('data-category', repo.language ? repo.language.toLowerCase() : 'other');
+            
+            // Build card content
             const languageColors = getLanguageColor(repo.language);
             const lastUpdated = formatDate(repo.updated_at);
-            const stars = repo.stargazers_count;
-            const forks = repo.forks_count;
             const projectIcon = getProjectIcon(repo.language, repo.name);
             
-            grid.innerHTML += `
-                <div class="project-card" data-category="${lang}">
-                    <div class="project-header">
-                        <div class="project-icon">
-                            ${projectIcon}
-                        </div>
-                        <div class="project-tech">
-                            <span style="background-color: ${languageColors.bg}; color: ${languageColors.text}">${repo.language || 'Other'}</span>
-                        </div>
+            card.innerHTML = `
+                <div class="project-header">
+                    <div class="project-icon">
+                        ${projectIcon}
                     </div>
-                    <div class="project-content">
-                        <h3>${repo.name}</h3>
-                        <p class="project-description">${repo.description || 'No description available'}</p>
-                        <div class="project-stats">
-                            <span><i class="fas fa-star"></i> ${stars}</span>
-                            <span><i class="fas fa-code-branch"></i> ${forks}</span>
-                            <span><i class="fas fa-clock"></i> ${lastUpdated}</span>
-                        </div>
-                        <div class="project-tech-icons">${getTechIcons(repo.language, repo.name)}</div>
-                        <div class="project-links">
-                            <a href="${repo.html_url}" class="project-link" target="_blank">
-                                <i class="fab fa-github"></i> View on GitHub
+                    <div class="project-tech">
+                        <span style="background-color: ${languageColors.bg}; color: ${languageColors.text}">${repo.language || 'Other'}</span>
+                    </div>
+                </div>
+                <div class="project-content">
+                    <h3>${repo.name}</h3>
+                    <p class="project-description">${repo.description || 'No description available'}</p>
+                    <div class="project-stats">
+                        <span><i class="fas fa-star"></i> ${repo.stargazers_count}</span>
+                        <span><i class="fas fa-code-branch"></i> ${repo.forks_count}</span>
+                        <span><i class="fas fa-clock"></i> ${lastUpdated}</span>
+                    </div>
+                    <div class="project-tech-icons">${getTechIcons(repo.language, repo.name)}</div>
+                    <div class="project-links">
+                        <a href="${repo.html_url}" class="project-link" target="_blank">
+                            <i class="fab fa-github"></i> View on GitHub
+                        </a>
+                        ${repo.homepage ? `
+                            <a href="${repo.homepage}" class="project-link demo-link" target="_blank">
+                                <i class="fas fa-external-link-alt"></i> Live Demo
                             </a>
-                            ${repo.homepage ? `
-                                <a href="${repo.homepage}" class="project-link demo-link" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> Live Demo
-                                </a>
-                            ` : ''}
-                        </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
+            
+            fragment.appendChild(card);
         });
-
-        // Initialize with 'all' filter
-        filterProjects('all');
+        
+        // Batch DOM update
+        requestAnimationFrame(() => {
+            grid.innerHTML = '';
+            grid.appendChild(fragment);
+            filterProjects('all');
+        });
     } catch (error) {
-        console.error('Error fetching GitHub repos:', error);
+        console.error('Error rendering GitHub repos:', error);
         grid.innerHTML = '<p class="error-message">Failed to load projects. Please try again later.</p>';
     }
 }
 
-// Gọi hàm khi trang tải xong
-window.addEventListener('DOMContentLoaded', renderGitHubRepos);
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    requestAnimationFrame(renderGitHubRepos);
+});
 
 // Contact section animations
-function animateContactSection() {
-    const contactItems = document.querySelectorAll('.contact-item');
-    const socialLinks = document.querySelectorAll('.social-link');
+const contactItems = document.querySelectorAll('.contact-item');
+const socialLinks = document.querySelectorAll('.social-link');
+
+function handleContactHover(e) {
+    if (window.innerWidth <= 768) return;
     
-    // Animate contact items with delay
-    contactItems.forEach((item, index) => {
-        item.style.opacity = '0';
-        item.style.transform = 'translateX(-20px)';
-        
-        setTimeout(() => {
-            item.style.transition = 'all 0.5s ease';
-            item.style.opacity = '1';
-            item.style.transform = 'translateX(0)';
-        }, 200 * index);
+    const item = e.currentTarget;
+    item.style.transform = 'translateX(5px)';
+}
+
+function handleContactLeave(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const item = e.currentTarget;
+    item.style.transform = '';
+}
+
+function handleSocialHover(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const link = e.currentTarget;
+    link.style.transform = 'translateY(-3px)';
+}
+
+function handleSocialLeave(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const link = e.currentTarget;
+    link.style.transform = '';
+}
+
+// Add event listeners with passive option
+contactItems.forEach(item => {
+    item.addEventListener('mouseenter', handleContactHover, { passive: true });
+    item.addEventListener('mouseleave', handleContactLeave, { passive: true });
+});
+
+socialLinks.forEach(link => {
+    link.addEventListener('mouseenter', handleSocialHover, { passive: true });
+    link.addEventListener('mouseleave', handleSocialLeave, { passive: true });
+});
+
+// Optimize for reduced motion preference
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    contactItems.forEach(item => {
+        item.style.transition = 'none';
     });
     
-    // Animate social links with delay
-    socialLinks.forEach((link, index) => {
-        link.style.opacity = '0';
-        link.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            link.style.transition = 'all 0.5s ease';
-            link.style.opacity = '1';
-            link.style.transform = 'translateY(0)';
-        }, 200 * (index + contactItems.length));
+    socialLinks.forEach(link => {
+        link.style.transition = 'none';
     });
 }
+
+// Optimize lazy loading
+const lazyLoadOptions = {
+    root: null,
+    rootMargin: '50px',
+    threshold: 0.1
+};
+
+const lazyLoadObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.dataset.src) {
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+            }
+            observer.unobserve(img);
+        }
+    });
+}, lazyLoadOptions);
+
+document.querySelectorAll('img[data-src]').forEach(img => {
+    lazyLoadObserver.observe(img);
+});
 
 // Add contact section to intersection observer
 const contactSection = document.querySelector('.contact');
 if (contactSection) {
-    observer.observe(contactSection);
+    sectionObserver.observe(contactSection);
     
     // Animate contact section when it becomes visible
     const contactObserver = new IntersectionObserver((entries) => {
@@ -291,4 +421,209 @@ if (contactSection) {
     }, { threshold: 0.2 });
     
     contactObserver.observe(contactSection);
-} 
+}
+
+// Optimize hero section animations
+const heroSection = document.querySelector('.hero');
+const heroContent = document.querySelector('.hero-content');
+
+// Use Intersection Observer for hero section
+const heroObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            // Animate hero content when it becomes visible
+            requestAnimationFrame(() => {
+                heroContent.classList.add('fade-in');
+            });
+            heroObserver.unobserve(entry.target);
+        }
+    });
+}, {
+    threshold: 0.1,
+    rootMargin: '50px'
+});
+
+if (heroSection) {
+    heroObserver.observe(heroSection);
+}
+
+// Optimize tech icons hover effects
+const techIcons = document.querySelectorAll('.main-tech-icons i, .main-tech-icons img');
+
+function handleTechIconHover(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const icon = e.currentTarget;
+    requestAnimationFrame(() => {
+        icon.style.transform = 'translateY(-2px)';
+    });
+}
+
+function handleTechIconLeave(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const icon = e.currentTarget;
+    requestAnimationFrame(() => {
+        icon.style.transform = '';
+    });
+}
+
+// Add event listeners with passive option
+techIcons.forEach(icon => {
+    icon.addEventListener('mouseenter', handleTechIconHover, { passive: true });
+    icon.addEventListener('mouseleave', handleTechIconLeave, { passive: true });
+});
+
+// Optimize CTA button hover effect
+const ctaButton = document.querySelector('.cta-button');
+
+function handleCtaHover(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const button = e.currentTarget;
+    requestAnimationFrame(() => {
+        button.style.transform = 'translateY(-3px)';
+        button.style.background = 'rgba(255, 255, 255, 0.2)';
+    });
+}
+
+function handleCtaLeave(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const button = e.currentTarget;
+    requestAnimationFrame(() => {
+        button.style.transform = '';
+        button.style.background = 'rgba(255, 255, 255, 0.1)';
+    });
+}
+
+if (ctaButton) {
+    ctaButton.addEventListener('mouseenter', handleCtaHover, { passive: true });
+    ctaButton.addEventListener('mouseleave', handleCtaLeave, { passive: true });
+}
+
+// Optimize for reduced motion preference
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    techIcons.forEach(icon => {
+        icon.style.transition = 'none';
+    });
+    
+    if (ctaButton) {
+        ctaButton.style.transition = 'none';
+    }
+}
+
+// Optimize avatar loading
+const avatar = document.querySelector('.avatar');
+if (avatar) {
+    // Preload avatar image
+    const preloadImage = new Image();
+    preloadImage.src = avatar.src;
+    
+    // Add loading animation
+    avatar.style.opacity = '0';
+    preloadImage.onload = () => {
+        requestAnimationFrame(() => {
+            avatar.style.transition = 'opacity 0.3s ease';
+            avatar.style.opacity = '1';
+        });
+    };
+}
+
+// Optimize about section animations
+const aboutSection = document.querySelector('.about');
+const aboutContent = document.querySelector('.about-content');
+
+// Use Intersection Observer for about section
+const aboutObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            // Animate about content when it becomes visible
+            requestAnimationFrame(() => {
+                aboutContent.classList.add('fade-in');
+            });
+            aboutObserver.unobserve(entry.target);
+        }
+    });
+}, {
+    threshold: 0.1,
+    rootMargin: '50px'
+});
+
+if (aboutSection) {
+    aboutObserver.observe(aboutSection);
+}
+
+// Optimize hover effects for about section
+const aboutItems = document.querySelectorAll('.about-text, .skills, .education-content, .work-content, .exp-content, .courses');
+const listItems = document.querySelectorAll('.edu-item, .work-item, .exp-item, .course-list li');
+
+function handleAboutItemHover(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const item = e.currentTarget;
+    requestAnimationFrame(() => {
+        item.style.transform = 'translateY(-5px)';
+    });
+}
+
+function handleAboutItemLeave(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const item = e.currentTarget;
+    requestAnimationFrame(() => {
+        item.style.transform = '';
+    });
+}
+
+function handleListItemHover(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const item = e.currentTarget;
+    requestAnimationFrame(() => {
+        item.style.transform = 'translateX(5px)';
+    });
+}
+
+function handleListItemLeave(e) {
+    if (window.innerWidth <= 768) return;
+    
+    const item = e.currentTarget;
+    requestAnimationFrame(() => {
+        item.style.transform = '';
+    });
+}
+
+// Add event listeners with passive option
+aboutItems.forEach(item => {
+    item.addEventListener('mouseenter', handleAboutItemHover, { passive: true });
+    item.addEventListener('mouseleave', handleAboutItemLeave, { passive: true });
+});
+
+listItems.forEach(item => {
+    item.addEventListener('mouseenter', handleListItemHover, { passive: true });
+    item.addEventListener('mouseleave', handleListItemLeave, { passive: true });
+});
+
+// Optimize for reduced motion preference
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    aboutItems.forEach(item => {
+        item.style.transition = 'none';
+    });
+    
+    listItems.forEach(item => {
+        item.style.transition = 'none';
+    });
+}
+
+// Optimize text rendering
+const aboutTexts = document.querySelectorAll('.about-text p, .skill-category, .edu-item, .work-item, .exp-item, .course-list li');
+aboutTexts.forEach(text => {
+    text.style.textRendering = 'optimizeLegibility';
+});
+
+// Optimize layout shifts
+const aboutElements = document.querySelectorAll('.about-text, .skills, .education-content, .work-content, .exp-content, .courses');
+aboutElements.forEach(element => {
+    element.style.contain = 'layout style paint';
+}); 
